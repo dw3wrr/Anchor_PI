@@ -1,0 +1,34 @@
+DEBUG: ndn_sig_verifier_verify_data, L253: DATA-PKT-DECODING: 54us
+DEBUG: ndn_sig_verifier_verify_data, L290: DATA-PKT-ECDSA-VERIFY: 8317us
+DEBUG: _on_new_content_verify_success, L209: SUB-NEW-DATA-AES-DEC: 118us
+DEBUG: _on_new_content_verify_success, L239: SUB-NEW-DATA-SCHEMA-VERIFY: 35us
+
+DEBUG: ndn_sig_verifier_verify_data, L253: DATA-PKT-DECODING: 16us
+DEBUG: ndn_sig_verifier_verify_data, L290: DATA-PKT-ECDSA-VERIFY: 8099us
+DEBUG: _on_new_content_verify_success, L209: SUB-NEW-DATA-AES-DEC: 116us
+DEBUG: _on_new_content_verify_success, L239: SUB-NEW-DATA-SCHEMA-VERIFY: 36us
+
+DEBUG: ndn_sig_verifier_verify_data, L253: DATA-PKT-DECODING: 14us
+DEBUG: ndn_sig_verifier_verify_data, L290: DATA-PKT-ECDSA-VERIFY: 8206us
+DEBUG: _on_new_content_verify_success, L209: SUB-NEW-DATA-AES-DEC: 116us
+DEBUG: _on_new_content_verify_success, L239: SUB-NEW-DATA-SCHEMA-VERIFY: 35us
+
+DEBUG: ndn_sig_verifier_verify_data, L253: DATA-PKT-DECODING: 16us
+DEBUG: ndn_sig_verifier_verify_data, L290: DATA-PKT-ECDSA-VERIFY: 8136us
+DEBUG: _on_new_content_verify_success, L209: SUB-NEW-DATA-AES-DEC: 116us
+DEBUG: _on_new_content_verify_success, L239: SUB-NEW-DATA-SCHEMA-VERIFY: 35us
+
+DEBUG: ndn_sig_verifier_verify_data, L253: DATA-PKT-DECODING: 18us
+DEBUG: ndn_sig_verifier_verify_data, L290: DATA-PKT-ECDSA-VERIFY: 8323us
+DEBUG: _on_new_content_verify_success, L209: SUB-NEW-DATA-AES-DEC: 115us
+DEBUG: _on_new_content_verify_success, L239: SUB-NEW-DATA-SCHEMA-VERIFY: 36us
+
+DEBUG: ndn_sig_verifier_verify_data, L253: DATA-PKT-DECODING: 14us
+DEBUG: ndn_sig_verifier_verify_data, L290: DATA-PKT-ECDSA-VERIFY: 7938us
+DEBUG: _on_new_content_verify_success, L209: SUB-NEW-DATA-AES-DEC: 114us
+DEBUG: _on_new_content_verify_success, L239: SUB-NEW-DATA-SCHEMA-VERIFY: 33us
+
+DEBUG: ndn_sig_verifier_verify_data, L253: DATA-PKT-DECODING: 14us
+DEBUG: ndn_sig_verifier_verify_data, L290: DATA-PKT-ECDSA-VERIFY: 8293us
+DEBUG: _on_new_content_verify_success, L209: SUB-NEW-DATA-AES-DEC: 116us
+DEBUG: _on_new_content_verify_success, L239: SUB-NEW-DATA-SCHEMA-VERIFY: 33us
