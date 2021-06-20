@@ -72,7 +72,7 @@ main(int argc, char *argv[])
   struct hostent *host_addr;
   struct in_addr **paddrs;
 
-  sz_addr = "192.168.1.6";
+  sz_addr = "192.168.1.8";
   sz_port1 = "3000";
   sz_port2 = "5000";
 
