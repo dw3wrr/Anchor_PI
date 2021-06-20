@@ -31,21 +31,6 @@ char* prefix_string = "ancmt";
 ndn_udp_face_t *face;
 
 void
-send_ancmt() {
-  //change route to multicast
-  //on basic node side, the basic node will start as a producer and wait for an interest packet
-  //once recieving an interest packet they will check if its name is ancmt
-  //producer initalized with ancmt prefix
-  ndn_interest_t interest;
-
-  ndn_name_from_string(&name_prefix, "ancmt", strlen("ancmt"));
-  ndn_forwarder_add_route_by_name(&face->intf, &name_prefix);
-  ndn_interest_from_name(&interest, &name_prefix);
-  ndn_forwarder_express_interest_struct(&interest, on_data, on_timeout, NULL);
-
-}
-
-void
 on_data(const uint8_t* rawdata, uint32_t data_size, void* userdata)
 {
   ndn_data_t data;
@@ -61,6 +46,21 @@ void
 on_timeout(void* userdata) {
   printf("On timeout\n");
   running = false;
+}
+
+void
+send_ancmt() {
+  //change route to multicast
+  //on basic node side, the basic node will start as a producer and wait for an interest packet
+  //once recieving an interest packet they will check if its name is ancmt
+  //producer initalized with ancmt prefix
+  ndn_interest_t interest;
+
+  ndn_name_from_string(&name_prefix, "ancmt", strlen("ancmt"));
+  ndn_forwarder_add_route_by_name(&face->intf, &name_prefix);
+  ndn_interest_from_name(&interest, &name_prefix);
+  ndn_forwarder_express_interest_struct(&interest, on_data, on_timeout, NULL);
+
 }
 
 int
