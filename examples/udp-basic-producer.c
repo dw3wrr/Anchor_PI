@@ -91,7 +91,7 @@ on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
   char * str = "I'm a Data packet.";
 
   printf("On interest\n");
-  printf("%s \n", interest);
+  //printf("%s \n", interest);
   data.name = name_prefix;
   ndn_data_set_content(&data, (uint8_t*)str, strlen(str) + 1);
   ndn_metainfo_init(&data.metainfo);
