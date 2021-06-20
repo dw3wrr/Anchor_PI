@@ -34,10 +34,14 @@ on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
   ndn_data_t data;
   ndn_encoder_t encoder;
   printf("On interest\n");
-  printf("%s,%s,%s\n", interest, interest_size, userdata);
+  //printf("%s,%s,%s\n", interest, interest_size, userdata);
 
-  if(NULL) {
-    char *str = "Ancmt acknoledged, anchor node";
+  ndn_interest_t interest_pkt;
+  ndn_interest_from_block(&interest_pkt, interest, interest_size);
+  ndn_name_print(&interest_pkt.name);
+
+  if(interst_pkt.name = "ancmt") {
+    char *str = "Ancmt acknoledged \nAnchor node at: ";
     data.name = name_prefix;
     ndn_data_set_content(&data, (uint8_t*)str, strlen(str) + 1);
     ndn_metainfo_init(&data.metainfo);
