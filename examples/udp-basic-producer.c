@@ -90,6 +90,10 @@ on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
   ndn_encoder_t encoder;
   char * str = "I'm a Data packet.";
 
+  ndn_interest_t interest_pkt;
+  ndn_interest_from_block(&interest_pkt, interest, interest_size);
+  ndn_name_print(&interest_pkt.name);
+
   printf("On interest\n");
   //printf("%s \n", interest);
   data.name = name_prefix;
