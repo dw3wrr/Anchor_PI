@@ -28,37 +28,30 @@ uint8_t buf[4096];
 ndn_udp_face_t *face;
 bool running;
 
-int
-on_ancmt(const uint8_t* interest, uint32_t interest_size, void* userdata)
-{
-  ndn_data_t data;
-  ndn_encoder_t encoder;
-  char * str = "Announcement acknoledged";
 
-  printf("On ancmt\n");
-  data.name = name_prefix;
-  ndn_data_set_content(&data, (uint8_t*)str, strlen(str) + 1);
-  ndn_metainfo_init(&data.metainfo);
-  ndn_metainfo_set_content_type(&data.metainfo, NDN_CONTENT_TYPE_BLOB);
-  encoder_init(&encoder, buf, 4096);
-  ndn_data_tlv_encode_digest_sign(&encoder, &data);
-  ndn_forwarder_put_data(encoder.output_value, encoder.offset);
-
-  return NDN_FWD_STRATEGY_SUPPRESS;
-}
 
 int
 on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
 {
-  if(interest.getName() == "ancmt") {
-    on_ancmt();
-  }
-  else {
-    ndn_data_t data;
-    ndn_encoder_t encoder;
-    char * str = "I'm a Data packet.";
+  ndn_data_t data;
+  ndn_encoder_t encoder;
+  printf("On interest\n");
 
-    printf("On interest\n");
+  if(name_prefix == "ancmt") {
+    char *str = "Ancmt acknoledged, anchor node";
+    data.name = name_prefix;
+    ndn_data_set_content(&data, (uint8_t*)str, strlen(str) + 1);
+    ndn_metainfo_init(&data.metainfo);
+    ndn_metainfo_set_content_type(&data.metainfo, NDN_CONTENT_TYPE_BLOB);
+    encoder_init(&encoder, buf, 4096);
+    ndn_data_tlv_encode_digest_sign(&encoder, &data);
+    ndn_forwarder_put_data(encoder.output_value, encoder.offset);
+
+    return NDN_FWD_STRATEGY_SUPPRESS;
+  }
+
+  else {
+    char *str = "I'm a Data packet.";
     data.name = name_prefix;
     ndn_data_set_content(&data, (uint8_t*)str, strlen(str) + 1);
     ndn_metainfo_init(&data.metainfo);
@@ -74,7 +67,23 @@ on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
 int
 main(int argc, char *argv[])
 {
-  
+  char *sz_port1, *sz_port2, *sz_addr;
+  uint32_t ul_port;
+  struct hostent *host_addr;
+  struct in_addr **paddrs;
+
+  sz_addr = "192.168.1.3";
+  sz_port1 = "5000";
+  sz_port2 = "3000";
+
+  host_addr = gethostbyname(sz_addr);
+  paddrs = (struct in_addr **)host_addr->h_addr_list;
+  server_ip = paddrs[0]->s_addr;
+  ul_port = strtoul(sz_port1, NULL, 10);
+  port1 = htons((uint16_t) ul_port);
+  ul_port = strtoul(sz_port2, NULL, 10);
+  port2 = htons((uint16_t) ul_port);
+  ndn_name_from_string(&name_prefix, "ancmt", strlen("ancmt"));
 
   ndn_lite_startup();
   face = ndn_udp_unicast_face_construct(INADDR_ANY, port1, server_ip, port2);

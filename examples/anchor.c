@@ -72,6 +72,10 @@ main(int argc, char *argv[])
   struct hostent *host_addr;
   struct in_addr **paddrs;
 
+  sz_addr = "192.168.1.6";
+  sz_port1 = "3000";
+  sz_port2 = "5000";
+
   host_addr = gethostbyname(sz_addr);
   paddrs = (struct in_addr **)host_addr->h_addr_list;
   server_ip = paddrs[0]->s_addr;
