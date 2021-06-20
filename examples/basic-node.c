@@ -28,16 +28,15 @@ uint8_t buf[4096];
 ndn_udp_face_t *face;
 bool running;
 
-
-
 int
 on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
 {
   ndn_data_t data;
   ndn_encoder_t encoder;
   printf("On interest\n");
+  printf("%s,%s,%s\n", interest, interest_size, userdata);
 
-  if(name_prefix == "ancmt") {
+  if(NULL) {
     char *str = "Ancmt acknoledged, anchor node";
     data.name = name_prefix;
     ndn_data_set_content(&data, (uint8_t*)str, strlen(str) + 1);
