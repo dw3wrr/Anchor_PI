@@ -88,7 +88,7 @@ main(int argc, char *argv[])
   port1 = htons((uint16_t) ul_port);
   ul_port = strtoul(sz_port2, NULL, 10);
   port2 = htons((uint16_t) ul_port);
-  ndn_name_from_string(&name_prefix, "ancmt", strlen("ancmt"));
+  ndn_name_from_string(&name_prefix, "ndn/fetch", strlen("ndn/fetch"));
 
   ndn_lite_startup();
   face = ndn_udp_unicast_face_construct(INADDR_ANY, port1, server_ip, port2);

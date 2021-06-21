@@ -56,7 +56,7 @@ send_ancmt() {
   //producer initalized with ancmt prefix
   ndn_interest_t interest;
 
-  ndn_name_from_string(&name_prefix, "ancmt", strlen("ancmt"));
+  ndn_name_from_string(&name_prefix, "ndn/fetch", strlen("ndn/fetch"));
   ndn_forwarder_add_route_by_name(&face->intf, &name_prefix);
   ndn_interest_from_name(&interest, &name_prefix);
   ndn_forwarder_express_interest_struct(&interest, on_data, on_timeout, NULL);
