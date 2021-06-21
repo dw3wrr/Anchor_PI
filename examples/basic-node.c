@@ -39,7 +39,8 @@ on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
   ndn_interest_t interest_pkt;
   ndn_interest_from_block(&interest_pkt, interest, interest_size);
   //ndn_name_print(&interest_pkt.name);
-  char *prefix = &interest_pkt.name->components[1];
+  char *prefix = &interest_pkt.name->components[1]->value[1];
+  printf("%s\n", prefix);
 
   if() {
     char *str = "Ancmt acknoledged \nAnchor node at: ";
