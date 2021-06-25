@@ -131,14 +131,9 @@ main(int argc, char *argv[])
 
   ndn_lite_startup();
   face = ndn_udp_unicast_face_construct(INADDR_ANY, port1, server_ip, port2);
-  if(argv[4] == "ancmt")
-    send_ancmt(face, interest);
-  }
-  else {  
-    ndn_forwarder_add_route_by_name(&face->intf, &name_prefix);
-    ndn_interest_from_name(&interest, &name_prefix);
-    ndn_forwarder_express_interest_struct(&interest, on_data, on_timeout, NULL);
-  }
+  ndn_forwarder_add_route_by_name(&face->intf, &name_prefix);
+  ndn_interest_from_name(&interest, &name_prefix);
+  ndn_forwarder_express_interest_struct(&interest, on_data, on_timeout, NULL);
 
   running = true;
   while(running) {
@@ -149,6 +144,7 @@ main(int argc, char *argv[])
   ndn_face_destroy(&face->intf);
   return 0;
 }
+
 
 /*
 int
