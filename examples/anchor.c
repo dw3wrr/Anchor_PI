@@ -133,8 +133,9 @@ main(int argc, char *argv[])
   face = ndn_udp_unicast_face_construct(INADDR_ANY, port1, server_ip, port2);
 
   if(argv[4] == "ancmt") {
-
+    send_ancmt(face, interest);
   }
+
   else {
     ndn_forwarder_add_route_by_name(&face->intf, &name_prefix);
     ndn_interest_from_name(&interest, &name_prefix);
