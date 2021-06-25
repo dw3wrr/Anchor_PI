@@ -79,7 +79,6 @@ parseArgs(int argc, char *argv[])
   }
   port2 = htons((uint16_t) ul_port);
 
-  ndn_name_from_string(&name_prefix, argv[4], strlen(argv[4]));
   if(ndn_name_from_string(&name_prefix, argv[4], strlen(argv[4])) != NDN_SUCCESS){
     fprintf(stderr, "ERROR: wrong name.\n");
     return 4;
@@ -93,6 +92,7 @@ on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
 {
   ndn_data_t data;
   ndn_encoder_t encoder;
+  char *str;
   printf("On interest\n");
   //printf("%s\n", interest);
 
@@ -103,11 +103,11 @@ on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
   printf("%s\n", prefix);
 
   if(prefix = "ancmt") {
-    char *str = "Announcement acknoledged.";
+    str = "Announcement acknoledged.";
   }
 
   else {
-    char *str = "I'm a Data packet.";
+    str = "I'm a Data packet.";
   }
 
   data.name = name_prefix;
