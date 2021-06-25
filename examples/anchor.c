@@ -24,7 +24,7 @@
 //see if it works
 
 in_port_t port1, port2;
-in_addr_t server_ip, local_ip;
+in_addr_t server_ip;
 ndn_name_t name_prefix;
 bool running;
 
@@ -149,3 +149,37 @@ main(int argc, char *argv[])
   ndn_face_destroy(&face->intf);
   return 0;
 }
+
+/*
+int
+main(int argc, char *argv[])
+{
+  ndn_udp_face_t *face;
+  ndn_interest_t interest;
+  int ret;
+
+  if((ret = parseArgs(argc, argv)) != 0){
+    return ret;
+  }
+
+  ndn_lite_startup();
+  face = ndn_udp_unicast_face_construct(INADDR_ANY, port1, server_ip, port2);
+  if(argv[4] == "ancmt")
+    send_ancmt(face, interest);
+  }
+  else {  
+    ndn_forwarder_add_route_by_name(&face->intf, &name_prefix);
+    ndn_interest_from_name(&interest, &name_prefix);
+    ndn_forwarder_express_interest_struct(&interest, on_data, on_timeout, NULL);
+  }
+
+  running = true;
+  while(running) {
+    ndn_forwarder_process();
+    usleep(10000);
+  }
+
+  ndn_face_destroy(&face->intf);
+  return 0;
+}
+*/
