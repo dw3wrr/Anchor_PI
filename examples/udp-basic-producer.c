@@ -91,13 +91,14 @@ on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
   char * str = "I'm a Data packet.";
 
   printf("On interest\n");
+
   //printf("%s \n", interest);
   ndn_interest_t interest_pkt;
   ndn_interest_from_block(&interest_pkt, interest, interest_size);
   //ndn_name_print(&interest_pkt.name);
   char *prefix = &interest_pkt.name.components[0].value[0];
   printf("%s\n", prefix);
-
+  
   data.name = name_prefix;
   ndn_data_set_content(&data, (uint8_t*)str, strlen(str) + 1);
   ndn_metainfo_init(&data.metainfo);
@@ -112,7 +113,6 @@ on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
 int
 main(int argc, char *argv[])
 {
-  
   int ret;
   if ((ret = parseArgs(argc, argv)) != 0) {
     return ret;

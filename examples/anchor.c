@@ -27,8 +27,65 @@ in_port_t port1, port2;
 in_addr_t server_ip, local_ip;
 ndn_name_t name_prefix;
 bool running;
-char* prefix_string = "ancmt";
-ndn_udp_face_t *face;
+
+int
+parseArgs(int argc, char *argv[])
+{
+  char *sz_port1, *sz_port2, *sz_addr;
+  uint32_t ul_port;
+  struct hostent * host_addr;
+  struct in_addr ** paddrs;
+
+  if(argc < 5) {
+    fprintf(stderr, "ERROR: wrong arguments.\n");
+    printf("Usage: <local-port> <remote-ip> <remote-port> <name-prefix>\n");
+    return 1;
+  }
+  sz_port1 = argv[1];
+  sz_addr = argv[2];
+  sz_port2 = argv[3];
+  //sz_prefix = argv[4];
+  //data_need = argv[5];
+
+  if(strlen(sz_port1) <= 0 || strlen(sz_addr) <= 0 || strlen(sz_port2) <= 0){
+    fprintf(stderr, "ERROR: wrong arguments.\n");
+    return 1;
+  }
+
+  host_addr = gethostbyname(sz_addr);
+  if(host_addr == NULL){
+    fprintf(stderr, "ERROR: wrong hostname.\n");
+    return 2;
+  }
+
+  paddrs = (struct in_addr **)host_addr->h_addr_list;
+  if(paddrs[0] == NULL){
+    fprintf(stderr, "ERROR: wrong hostname.\n");
+    return 2;
+  }
+  server_ip = paddrs[0]->s_addr;
+
+  ul_port = strtoul(sz_port1, NULL, 10);
+  if(ul_port < 1024 || ul_port >= 65536){
+    fprintf(stderr, "ERROR: wrong port number.\n");
+    return 3;
+  }
+  port1 = htons((uint16_t) ul_port);
+
+  ul_port = strtoul(sz_port2, NULL, 10);
+  if(ul_port < 1024 || ul_port >= 65536){
+    fprintf(stderr, "ERROR: wrong port number.\n");
+    return 3;
+  }
+  port2 = htons((uint16_t) ul_port);
+
+  if(ndn_name_from_string(&name_prefix, argv[4], strlen(argv[4])) != NDN_SUCCESS){
+    fprintf(stderr, "ERROR: wrong name.\n");
+    return 4;
+  }
+
+  return 0;
+}
 
 void
 on_data(const uint8_t* rawdata, uint32_t data_size, void* userdata)
@@ -49,44 +106,39 @@ on_timeout(void* userdata) {
 }
 
 void
-send_ancmt() {
+send_ancmt(ndn_udp_face_t *faceInput, ndn_interest_t interestInput) {
   //change route to multicast
   //on basic node side, the basic node will start as a producer and wait for an interest packet
   //once recieving an interest packet they will check if its name is ancmt
   //producer initalized with ancmt prefix
-  ndn_interest_t interest;
+  printf("Layer 1");
 
-  ndn_name_from_string(&name_prefix, "ndn/fetch", strlen("ndn/fetch"));
-  ndn_forwarder_add_route_by_name(&face->intf, &name_prefix);
-  ndn_interest_from_name(&interest, &name_prefix);
-  ndn_forwarder_express_interest_struct(&interest, on_data, on_timeout, NULL);
-
+  ndn_forwarder_add_route_by_name(&faceInput->intf, &name_prefix);
+  ndn_interest_from_name(&interestInput, &name_prefix);
+  ndn_forwarder_express_interest_struct(&interestInput, on_data, on_timeout, NULL);
 }
 
 int
 main(int argc, char *argv[])
 {
-  //ndn_udp_face_t *face;
-  char *sz_port1, *sz_port2, *sz_addr;
-  uint32_t ul_port;
-  struct hostent *host_addr;
-  struct in_addr **paddrs;
+  ndn_udp_face_t *face;
+  ndn_interest_t interest;
+  int ret;
 
-  sz_addr = "192.168.1.8";
-  sz_port1 = "3000";
-  sz_port2 = "5000";
-
-  host_addr = gethostbyname(sz_addr);
-  paddrs = (struct in_addr **)host_addr->h_addr_list;
-  server_ip = paddrs[0]->s_addr;
-  ul_port = strtoul(sz_port1, NULL, 10);
-  port1 = htons((uint16_t) ul_port);
-  ul_port = strtoul(sz_port2, NULL, 10);
-  port2 = htons((uint16_t) ul_port);
+  if((ret = parseArgs(argc, argv)) != 0){
+    return ret;
+  }
 
   ndn_lite_startup();
   face = ndn_udp_unicast_face_construct(INADDR_ANY, port1, server_ip, port2);
-  send_ancmt();
+  if(argv[4] == "ancmt")
+    send_ancmt(face, interest);
+  }
+  else {
+    ndn_forwarder_add_route_by_name(&face->intf, &name_prefix);
+    ndn_interest_from_name(&interest, &name_prefix);
+    ndn_forwarder_express_interest_struct(&interest, on_data, on_timeout, NULL);
+  }
 
   running = true;
   while(running) {
