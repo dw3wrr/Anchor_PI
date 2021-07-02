@@ -21,6 +21,12 @@
 //when the node receives an ancmt (interest) packet it sends an acknowledgeent packet back
 //
 
+//Anchor Parameters:
+int time_slice = 2;
+char selectors[];
+
+
+
 in_port_t port1, port2;
 in_addr_t server_ip;
 ndn_name_t name_prefix;
@@ -87,6 +93,7 @@ parseArgs(int argc, char *argv[])
   return 0;
 }
 
+//Producers
 int
 on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
 {
@@ -102,6 +109,7 @@ on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
   char *prefix = &interest_pkt.name.components[0].value[0];
   printf("%s\n", prefix);
 
+  //Layer 1 Data Packet
   if(prefix = "ancmt") {
     str = "Announcement acknoledged.";
   }
@@ -110,6 +118,7 @@ on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
     str = "I'm a Data packet.";
   }
 
+  // TODO: move to a new function
   data.name = name_prefix;
   ndn_data_set_content(&data, (uint8_t*)str, strlen(str) + 1);
   ndn_metainfo_init(&data.metainfo);
@@ -119,6 +128,14 @@ on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
   ndn_forwarder_put_data(encoder.output_value, encoder.offset);
 
   return NDN_FWD_STRATEGY_SUPPRESS;
+}
+
+//Reply data packet
+int
+reply_ancmt()
+{
+  ndn_data_t data;
+  // data/2/
 }
 
 int
@@ -142,6 +159,10 @@ main(int argc, char *argv[])
   ndn_face_destroy(&face->intf);
   return 0;
 }
+
+/* TODO: Split reciveing ancmt functon and sending reply
+
+*/
 
 /*
 int

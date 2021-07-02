@@ -28,6 +28,8 @@ in_addr_t server_ip;
 ndn_name_t name_prefix;
 bool running;
 
+int time_slice = 2;
+
 int
 parseArgs(int argc, char *argv[])
 {
@@ -87,6 +89,7 @@ parseArgs(int argc, char *argv[])
   return 0;
 }
 
+//consumer-side
 void
 on_data(const uint8_t* rawdata, uint32_t data_size, void* userdata)
 {
@@ -113,8 +116,11 @@ send_ancmt(ndn_udp_face_t *faceInput, ndn_interest_t interestInput) {
   //producer initalized with ancmt prefix
   printf("Layer 1");
 
+  char *str = "ancmt/data/1";
+
   ndn_forwarder_add_route_by_name(&faceInput->intf, &name_prefix);
   ndn_interest_from_name(&interestInput, &name_prefix);
+  // TODO: Remove recieving data packet
   ndn_forwarder_express_interest_struct(&interestInput, on_data, on_timeout, NULL);
 }
 
@@ -136,6 +142,7 @@ main(int argc, char *argv[])
     send_ancmt(face, interest);
   }
 
+  // TODO: divide send and recieve of interest packets
   else {
     ndn_forwarder_add_route_by_name(&face->intf, &name_prefix);
     ndn_interest_from_name(&interest, &name_prefix);
