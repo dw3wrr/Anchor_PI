@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
+#include <pthread.h>
 #include <ndn-lite.h>
 #include "ndn-lite/encode/name.h"
 #include "ndn-lite/encode/data.h"

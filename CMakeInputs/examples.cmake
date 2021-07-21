@@ -13,6 +13,7 @@ set(LIST_EXAMPLES
   "udp-group-consumer"
   "anchor"
   "basic-node"
+  "normal-node"
 #  "access-control-producer"
 #  "access-control-consumer"
 #  "access-control-controller"
