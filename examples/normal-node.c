@@ -7,7 +7,9 @@
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
+#include <stdbool.h>
 #include <ndn-lite.h>
+#include "ndn-lite.h"
 #include "ndn-lite/encode/name.h"
 #include "ndn-lite/encode/data.h"
 #include "ndn-lite/encode/interest.h"
@@ -41,15 +43,20 @@ bool ancmt_sent = false;
 int time_slice = 3;
 
 //Selector integers
-int selector[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-int stored_selectors[10] = {};
+//selector will be set from hash function of previous block
+int selector[10] = {}; //change from 0 to 9
+bool stored_selectors[10];
 
-bool delay_start = false;
+bool delay_start[10];
 int delay = 60000;
 int max_interfaces = 8;
 //set array for multiple anchors for anchor/selector 1 - 10
-int interface_num[];
-bool did_flood[];
+int interface_num[10];
+bool did_flood[10];
+
+//
+int last_interest;
+
 
 //Signature data for node (private key)
 uint8_t secp256r1_prv_key_str[32] = {
@@ -217,68 +224,94 @@ void on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata
     ndn_interest_t interest_pkt;
     ndn_interest_from_block(&interest_pkt, interest, interest_size);
     char *prefix = &interest_pkt.name.components[0].value[0];
-    stored_selectors.add
+
+    int timestamp = interest_pkt.parameters.value[0];
+    
+    //selector number
+    int parameters = interest_pkt.parameters.value[1];
+    int current_time = ndn_time_now_ms();
+    
+    
     printf("%s\n", prefix);
 
-    verify_packet(interest);
+    verify_packet(interest_pkt);
     insert_pit();
 
     //check ancmt, stored selectors, and timestamp(maybe)
     //timestamp + selector for new and old
-    if((prefix == "ancmt") && interest_pkt.parameters.value().isnotin(stored_selectors)) {
-        if(delay_start != true) {
-            pthread_create(&layer1, NULL, start_delay, delay);
-            delay_start = true;
+    //fix time to coorespond to last ancmt timestamp
+    if((prefix == "ancmt") && stored_selectors[parameters] == false && (timestamp - last_interest) > 0) {
+        stored_selectors[parameters] = true;
+        if(delay_start[parameters] != true) {
+            pthread_create(&layer1, NULL, start_delay, parameters);
+            delay_start[parameters] = true;
         }
-        interface_num++;
-        if(interface_num >= max_interfaces) {
+        interface_num[parameters]++;
+        /*
+        if(interface_num[parameters] >= max_interfaces) {
             flood(interest_pkt);
+            did_flood[parameters] = true;
+            reply_ancmt();
         }
+        */
     }
 
-    else if((prefix == "ancmt") && old) {
-        interface_num++;
-        if(interface_num >= max_interfaces) {
-            if(did_flood == true) {
+    else if((prefix == "ancmt") && stored_selectors[parameters] == true) {
+        interface_num[parameters]++;
+        if(interface_num[parameters] >= max_interfaces) {
+            if(did_flood[parameters] == true) {
             }
             else {
                 flood(interest_pkt);
-                did_flood = true;
+                did_flood[parameters] = true;
+                reply_ancmt();
             }
         }
     }
-    
+    last_interest = timestamp;
 }
 
 //create new parameter for did flood so that we can run more than one ancmt at a time
 
-void insert_pit() {
+//ruiran 
+void insert_pit(ndn_interest_t interest) {
+    router = ndn_forwarder_get();
+    char *prefix = &interest_pkt.name.components[0].value[0];
+    int timstamp = interest_pkt.parameters.value[0];
+    int parameters = interest_pkt.parameters.value[1];
 
 }
 
-void start_delay(int mstime) {
+void start_delay(int param) {
     //starts delay and adds onto max interfaces
     clock_t start_time = clock();
-    while (clock() < start_time + mstime) {}
+    while (clock() < start_time + delay) {}
     //then when finished, flood
-    if(did_flood == true) {
+    if(did_flood[param] == true) {
     }
     else {
         flood(ancmt);
-        did_flood = true;
+        did_flood[param] = true;
+        reply_ancmt();
     }
+}
+
+void verify_packet() {
+    //check signature is correct from the public key is valid for all normal nodes
+    //check if timestamp is before the current time
+}
+
+//ruiran
+void reply_ancmt() {
+    //layer 2 interest reply
+}
+
+void generate_data() {
+    
 }
 
 void on_data() {
 
-}
-
-void verify_packet() {
-
-}
-
-void reply_ancmt() {
-    
 }
 
 int main(int argc, char *argv[]) {
