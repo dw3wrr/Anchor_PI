@@ -23,7 +23,6 @@
 #include "ndn-lite/encode/ndn-rule-storage.h"
 #include "ndn-lite/forwarder/pit.h"
 
-//
 //intitialize pit and fib for layer 1
 ndn_pit layer1_pit;
 ndn_fib layer1_fib;
@@ -56,6 +55,11 @@ bool did_flood[10];
 
 //
 int last_interest;
+
+//ndn keys
+ndn_ecc_prv_t* ecc_secp256r1_prv_key;
+ndn_ecc_pub_t* ecc_secp256r1_pub_key;
+ndn_key_storage_t* storage;
 
 
 //Signature data for node (private key)
@@ -102,13 +106,7 @@ void send_ancmt() {
     //ndn_interest_set_Parameters(&ancmt, (uint8_t*)ip_address, sizeof(ip_address));
 
     //Signed interest init
-    ndn_ecc_prv_t* ecc_secp256r1_prv_key;
-    ndn_ecc_pub_t* ecc_secp256r1_pub_key;
-    ndn_key_storage_get_empty_ecc_key(&ecc_secp256r1_pub_key, &ecc_secp256r1_prv_key);
-    ndn_ecc_make_key(ecc_secp256r1_pub_key, ecc_secp256r1_prv_key, NDN_ECDSA_CURVE_SECP256R1, 890);
-    ndn_ecc_prv_init(ecc_secp256r1_prv_key, secp256r1_prv_key_str, sizeof(secp256r1_prv_key_str), NDN_ECDSA_CURVE_SECP256R1, 0);
-
-    ndn_key_storage_t* storage = ndn_key_storage_get_instance();
+    storage = ndn_key_storage_get_instance();
     ndn_signed_interest_ecdsa_sign(&ancmt, &storage->self_identity, ecc_secp256r1_prv_key);
     encoder_init(&encoder, interest_buf, 4096);
     ndn_interest_tlv_encode(&encoder, &ancmt);
@@ -221,21 +219,23 @@ void flood(ndn_interest_t interest) {
 //
 void on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata) {
     pthread_t layer1;
-    ndn_interest_t interest_pkt;
-    ndn_interest_from_block(&interest_pkt, interest, interest_size);
-    char *prefix = &interest_pkt.name.components[0].value[0];
+    ndn_interest_t* interest_pkt;
+    ndn_interest_from_block(&interest_pkt, &interest, interest_size);
+
+    char *prefix = interest_pkt.name.components[0].value[0];
 
     int timestamp = interest_pkt.parameters.value[0];
+    int current_time = ndn_time_now_ms();
     
     //selector number
     int parameters = interest_pkt.parameters.value[1];
-    int current_time = ndn_time_now_ms();
     
-    
-    printf("%s\n", prefix);
+    //printf("%s\n", prefix);
 
-    verify_packet(interest_pkt);
-    insert_pit();
+    if(verify_packet(&interest_pkt) == false) {
+        return;
+    }
+    insert_pit(interest_pkt);
 
     //check ancmt, stored selectors, and timestamp(maybe)
     //timestamp + selector for new and old
@@ -276,7 +276,7 @@ void on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata
 //ruiran 
 void insert_pit(ndn_interest_t interest) {
     router = ndn_forwarder_get();
-    char *prefix = &interest_pkt.name.components[0].value[0];
+    char *prefix = interest_pkt.name.components[0].value[0];
     int timstamp = interest_pkt.parameters.value[0];
     int parameters = interest_pkt.parameters.value[1];
 
@@ -296,9 +296,19 @@ void start_delay(int param) {
     }
 }
 
-void verify_packet() {
+int verify_packet(ndn_interest_t* interest) {
     //check signature is correct from the public key is valid for all normal nodes
     //check if timestamp is before the current time
+    int timestamp = interest_pkt.parameters.value[0];
+    int current_time = ndn_time_now_ms();
+
+    if((current_time - timestamp) < 0) {
+        return false;
+    }
+    if(ndn_signed_interest_ecdsa_verify(&interest, &ecc_secp256r1_pub_key) != NDN_SUCCESS) {
+        return false;
+    }
+    return true;
 }
 
 //ruiran
@@ -306,7 +316,9 @@ void reply_ancmt() {
     //layer 2 interest reply
 }
 
+//send without ancmt 
 void generate_data() {
+    //check from layer 1 PIT to reply data packet
     
 }
 
@@ -327,6 +339,12 @@ int main(int argc, char *argv[]) {
     ndn_forwarder_register_name_prefix(&prefix_name, on_interest, NULL);
     //registers ancmt prefix with the forwarder so when ndn_forwarder_process is called, it will call the function on_interest
     populate_fib();
+
+    //signature init
+    ndn_key_storage_get_empty_ecc_key(&ecc_secp256r1_pub_key, &ecc_secp256r1_prv_key);
+    ndn_ecc_make_key(ecc_secp256r1_pub_key, ecc_secp256r1_prv_key, NDN_ECDSA_CURVE_SECP256R1, 890);
+    ndn_ecc_prv_init(ecc_secp256r1_prv_key, secp256r1_prv_key_str, sizeof(secp256r1_prv_key_str), NDN_ECDSA_CURVE_SECP256R1, 0);
+    storage = ndn_key_storage_get_instance();
 
     running = true;
     while (running) {
