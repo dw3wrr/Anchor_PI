@@ -2,17 +2,17 @@ set(DIR_EXAMPLES_OUTPUT "${PROJECT_BINARY_DIR}/examples")
 
 # Single-file examples
 set(LIST_EXAMPLES
-  "tutorial-gen-new-shared-info"
-  "tutorial-app"
-  "tutorial-app-sub"
-  "app-template"
+#  "tutorial-gen-new-shared-info"
+#  "tutorial-app"
+#  "tutorial-app-sub"
+#  "app-template"
 #  "ndn-lite-sd-peer"
-  "udp-basic-producer"
-  "udp-basic-consumer"
-  "udp-group-producer"
-  "udp-group-consumer"
-  "anchor"
-  "basic-node"
+#  "udp-basic-producer"
+#  "udp-basic-consumer"
+#  "udp-group-producer"
+#  "udp-group-consumer"
+#  "anchor"
+#  "basic-node"
   "normal-node"
 #  "access-control-producer"
 #  "access-control-consumer"
@@ -27,7 +27,7 @@ set(LIST_EXAMPLES
 #  "file-transfer-server"
 #  "bootstrap"
 #  "iot-light"
-   "test-repo"
+#  "test-repo"
 )
 foreach(EXAM_NAME IN LISTS LIST_EXAMPLES)
   add_executable(${EXAM_NAME} "${DIR_EXAMPLES}/${EXAM_NAME}.c")
