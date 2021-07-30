@@ -159,7 +159,7 @@ void send_ancmt() {
 
     //This creates the routes for the interest and sends to nodes
     //ndn_forwarder_add_route_by_name(&face->intf, &prefix_name);
-    ndn_name_from_string(&prefix_name, prefix_string, strlen(prefix_string));
+    ndn_name_from_string(&prefix_name, &prefix_string, strlen(prefix_string));
     ndn_interest_from_name(&ancmt, &prefix_name);
     //ndn_forwarder_express_interest_struct(&interest, on_data, on_timeout, NULL);
 
@@ -216,7 +216,49 @@ void populate_fib() {
     ndn_forwarder_add_route_by_name(&face->intf, &prefix_name);
 }
 
-//
+int verify_packet(ndn_interest_t* interest) {
+    //check signature is correct from the public key is valid for all normal nodes
+    //check if timestamp is before the current time
+    int timestamp = interest_pkt.parameters.value[0];
+    int current_time = ndn_time_now_ms();
+
+    if((current_time - timestamp) < 0) {
+        return false;
+    }
+    if(ndn_signed_interest_ecdsa_verify(&interest, &ecc_secp256r1_pub_key) != NDN_SUCCESS) {
+        return false;
+    }
+    return true;
+}
+
+void start_delay(int param) {
+    //starts delay and adds onto max interfaces
+    clock_t start_time = clock();
+    while (clock() < start_time + delay) {}
+    //then when finished, flood
+    if(did_flood[param] == true) {
+    }
+    else {
+        flood(ancmt);
+        did_flood[param] = true;
+        reply_ancmt();
+    }
+}
+
+//ruiran 
+void insert_pit(ndn_interest_t interest) {
+    router = ndn_forwarder_get();
+    char *prefix = interest_pkt.name.components[0].value[0];
+    int timstamp = interest_pkt.parameters.value[0];
+    int parameters = interest_pkt.parameters.value[1];
+
+}
+
+//ruiran
+void reply_ancmt() {
+    //layer 2 interest reply
+}
+
 void on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata) {
     pthread_t layer1;
     ndn_interest_t* interest_pkt;
@@ -271,64 +313,51 @@ void on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata
     last_interest = timestamp;
 }
 
-//create new parameter for did flood so that we can run more than one ancmt at a time
-
-//ruiran 
-void insert_pit(ndn_interest_t interest) {
-    router = ndn_forwarder_get();
-    char *prefix = interest_pkt.name.components[0].value[0];
-    int timstamp = interest_pkt.parameters.value[0];
-    int parameters = interest_pkt.parameters.value[1];
-
-}
-
-void start_delay(int param) {
-    //starts delay and adds onto max interfaces
-    clock_t start_time = clock();
-    while (clock() < start_time + delay) {}
-    //then when finished, flood
-    if(did_flood[param] == true) {
-    }
-    else {
-        flood(ancmt);
-        did_flood[param] = true;
-        reply_ancmt();
-    }
-}
-
-int verify_packet(ndn_interest_t* interest) {
-    //check signature is correct from the public key is valid for all normal nodes
-    //check if timestamp is before the current time
-    int timestamp = interest_pkt.parameters.value[0];
-    int current_time = ndn_time_now_ms();
-
-    if((current_time - timestamp) < 0) {
-        return false;
-    }
-    if(ndn_signed_interest_ecdsa_verify(&interest, &ecc_secp256r1_pub_key) != NDN_SUCCESS) {
-        return false;
-    }
-    return true;
-}
-
-//ruiran
-void reply_ancmt() {
-    //layer 2 interest reply
-}
-
 //send without ancmt 
 void generate_data() {
     //check from layer 1 PIT to reply data packet
-    
+    ndn_data_t data_pkt;
+    ndn_encoder_t encoder;
+    ndn_name_t *name_prefix;
+    char *str = "/data/1";
+
+    ndn_name_from_string(&name_prefix, &str, strlen(str));
+    data.name = name_prefix;
+    str = "Layer 1 Data Packet";
+    ndn_time_ms_t timestamp = ndn_time_now_ms();
+    uint8_t *data_content = (uint8_t)str + (uint8_t)timestamp;
+
+    ndn_data_set_content(&data_pkt, (uint8_t*)data_content, sizeof(data_content));
+    ndn_metainfo_init(&data_pkt.metainfo);
+    ndn_metainfo_set_content_type(&data_pkt.metainfo, NDN_CONTENT_TYPE_BLOB);
+
+    encoder_init(&encoder, buf, 4096);
+    ndn_data_tlv_encode_ecdsa_sign(&encoder, &data_pkt, &name_prefix, &ecc_secp256r1_prv_key);
+    ndn_forwarder_put_data(encoder.output_value, encoder.offset);
 }
 
-void on_data() {
-    //printf()
+void verify_data(ndn_data_t *data) {
+    ndn_data_tlv_decode_ecdsa_verify(ndn_data_t* data, const uint8_t* block_value, uint32_t block_size, const ndn_ecc_pub_t* pub_key);
+}
+
+void on_data(const uint8_t* rawdata, uint32_t data_size, void* userdata) {
+    ndn_data_t *data_pkt;
+
+    if(verify_data(&data_pkt) == false) {
+        return;
+    }
+
+    //printf("On data\n");
+    if (ndn_data_tlv_decode_digest_verify(&data_pkt, rawdata, data_size)) {
+        printf("Decoding failed.\n");
+    }
+    
+    printf("It says: %s\n", data_pkt.content_value);
 }
 
 //debug pit
 void debug_pit() {
-
+    
 }
 
 //debug fib
@@ -344,8 +373,8 @@ int main(int argc, char *argv[]) {
     char* ancmt_string = "/ancmt";
 
     ndn_lite_startup();
-    //nameprefix =anmct
-    ndn_name_from_string(&prefix_name, ancmt_string, strlen(ancmt_string));
+    //nameprefix = anmct
+    ndn_name_from_string(&prefix_name, &ancmt_string, strlen(ancmt_string));
     ndn_forwarder_register_name_prefix(&prefix_name, on_interest, NULL);
     //registers ancmt prefix with the forwarder so when ndn_forwarder_process is called, it will call the function on_interest
     populate_fib();
