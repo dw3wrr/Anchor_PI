@@ -92,7 +92,7 @@ void flood(ndn_interest_t interest) {
         //Flood without accounting for time delay or max number of interfaces
         //Get all closest interfaces and forward to them
         printf("Forwarding Announcement (Layer 1)...");
-        ndn_forwarder_express_interest_struct(&interest, on_data, NULL, NULL);
+        ndn_forwarder_express_interest_struct(&interest, NULL, NULL, NULL);
         /*
         for(int i = 0; i < router.fib.capacity; i ++) {
             //printf("looking at interfaces in fib")
@@ -129,7 +129,7 @@ void send_ancmt() {
     ndn_encoder_t encoder;
     ndn_udp_face_t *face;
     ndn_name_t prefix_name;
-    char* prefix_string = "/ancmt/data/1";
+    char* prefix_string = "/ancmt/1";
     char interest_buf[4096];
 
     //Sets timestamp
@@ -313,6 +313,11 @@ void on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata
     last_interest = timestamp;
 }
 
+//
+void reply_interest(ndn_data_t *data, int layer_num) {
+
+}
+
 //send without ancmt 
 void generate_data() {
     //check from layer 1 PIT to reply data packet
@@ -351,13 +356,15 @@ void on_data(const uint8_t* rawdata, uint32_t data_size, void* userdata) {
     if (ndn_data_tlv_decode_digest_verify(&data_pkt, rawdata, data_size)) {
         printf("Decoding failed.\n");
     }
-    
+
     printf("It says: %s\n", data_pkt.content_value);
 }
 
 //debug pit
 void debug_pit() {
-    
+    //get pit data
+    //send to http website
+    //whenever any new pit entries come in send to http
 }
 
 //debug fib
