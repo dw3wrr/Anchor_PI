@@ -77,7 +77,9 @@ ndn_forwarder_init(void);
 
 /** Returns the forwarder as a pointer
  */
-const ndn_forwarder_t*
+// const ndn_forwarder_t*
+// ndn_forwarder_get(void);
+ndn_forwarder_t*
 ndn_forwarder_get(void);
 
 /** Process event messages.

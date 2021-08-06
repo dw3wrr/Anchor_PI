@@ -77,6 +77,10 @@ ndn_fib_remove_entry_if_empty(ndn_fib_t* self, ndn_fib_entry_t* entry);
 ndn_fib_entry_t*
 ndn_fib_prefix_match(ndn_fib_t* self, uint8_t* prefix, size_t length);
 
+//added remove entry to use in normal node flood
+static inline void
+ndn_fib_remove_entry(ndn_fib_t* self, ndn_fib_entry_t* entry);
+
 /*@}*/
 
 #ifdef __cplusplus

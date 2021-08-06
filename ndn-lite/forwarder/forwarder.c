@@ -76,7 +76,11 @@ ndn_forwarder_init(void)
   ptr += NDN_PIT_RESERVE_SIZE(NDN_PIT_MAX_SIZE);
 }
 
-const ndn_forwarder_t*
+// const ndn_forwarder_t*
+// ndn_forwarder_get(void){
+//   return &forwarder;
+// }
+ndn_forwarder_t*
 ndn_forwarder_get(void){
   return &forwarder;
 }
@@ -249,7 +253,9 @@ ndn_forwarder_express_interest(uint8_t* interest, size_t length,
   size_t name_len;
   ndn_pit_entry_t* pit_entry;
 
-  if(interest == NULL || on_data == NULL)
+  // if(interest == NULL || on_data == NULL)
+  //   return NDN_INVALID_POINTER;
+  if(interest == NULL)
     return NDN_INVALID_POINTER;
 
   ret = tlv_interest_get_header(interest, length, &options, &name, &name_len);
