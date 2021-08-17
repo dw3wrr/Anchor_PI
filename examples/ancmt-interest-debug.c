@@ -7,6 +7,7 @@
  *
  * See AUTHORS.md for complete list of NDN IOT PKG authors and contributors.
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <netdb.h>
@@ -15,12 +16,10 @@
 #include <signal.h>
 #include <string.h>
 #include <time.h>
-#include <pthread.h>
 #include <stdbool.h>
 #include <setjmp.h>
 #include <ndn-lite.h>
 #include "ndn-lite.h"
-#include "ndn-lite/util/uniform-time.h"
 #include "ndn-lite/encode/name.h"
 #include "ndn-lite/encode/data.h"
 #include "ndn-lite/encode/interest.h"
@@ -36,10 +35,12 @@
 #include "ndn-lite/forwarder/fib.h"
 #include "ndn-lite/forwarder/forwarder.h"
 
+
 in_port_t port1, port2;
 in_addr_t server_ip;
 ndn_name_t name_prefix;
 bool running;
+int selector[10] = {0,1,2,3,4,5,6,7,8,9};
 
 int
 parseArgs(int argc, char *argv[])
@@ -121,10 +122,6 @@ on_timeout(void* userdata) {
 int
 main(int argc, char *argv[])
 {
-  int selector_ptr[10] = {0,1,2,3,4,5,6,7,8,9};
-  int *selector = selector_ptr;
-  ndn_time_ms_t time_ptr = ndn_time_now_ms();
-  ndn_time_ms_t *timestamp = &time_ptr;
   ndn_udp_face_t *face;
   ndn_interest_t interest;
   int ret;
@@ -133,15 +130,13 @@ main(int argc, char *argv[])
     return ret;
   }
 
-  //segmentation faults caused by pointers needing to be used for inputs to ndn_set_param func
   ndn_lite_startup();
   face = ndn_udp_unicast_face_construct(INADDR_ANY, port1, server_ip, port2);
   ndn_forwarder_add_route_by_name(&face->intf, &name_prefix);
   ndn_interest_from_name(&interest, &name_prefix);
+  ndn_time_ms_t timestamp = ndn_time_now_ms();
   ndn_interest_set_Parameters(&interest, (uint8_t*)timestamp, sizeof(timestamp));
-  printf("%s\n", timestamp);
-  ndn_interest_set_Parameters(&interest, (uint8_t*)(selector + 1), sizeof(selector + 1));
-  printf("%s\n", (selector + 1));
+  ndn_interest_set_Parameters(&interest, (uint8_t*)selector[1], sizeof(selector[0]));
   ndn_forwarder_express_interest_struct(&interest, on_data, on_timeout, NULL);
 
   running = true;
