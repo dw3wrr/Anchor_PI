@@ -121,13 +121,15 @@ on_timeout(void* userdata) {
 int
 main(int argc, char *argv[])
 {
-  int selector_ptr[10] = {0,1,2,3,4,5,6,7,8,9};
-  int *selector = selector_ptr;
-  ndn_time_ms_t time_ptr = ndn_time_now_ms();
-  ndn_time_ms_t *timestamp = &time_ptr;
+  uint8_t selector[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+  uint8_t *selector_ptr = selector;
   ndn_udp_face_t *face;
   ndn_interest_t interest;
   int ret;
+
+  // time_t clk = time(NULL);
+  // char* timestamp = ctime(&clk);
+  ndn_time_ms_t time_ptr = ndn_time_now_ms();
 
   if((ret = parseArgs(argc, argv)) != 0){
     return ret;
@@ -138,10 +140,20 @@ main(int argc, char *argv[])
   face = ndn_udp_unicast_face_construct(INADDR_ANY, port1, server_ip, port2);
   ndn_forwarder_add_route_by_name(&face->intf, &name_prefix);
   ndn_interest_from_name(&interest, &name_prefix);
-  ndn_interest_set_Parameters(&interest, (uint8_t*)timestamp, sizeof(timestamp));
-  printf("%s\n", timestamp);
-  ndn_interest_set_Parameters(&interest, (uint8_t*)(selector + 1), sizeof(selector + 1));
-  printf("%s\n", (selector + 1));
+  
+  //ndn_interest_set_Parameters(&interest, (uint8_t*)time_ptr, sizeof(timestamp));
+  //printf("CTIME: %s, %d\n", timestamp, timestamp);
+  printf("TIMESTAMP: %d\n", time_ptr);
+  printf("SELECTOR: %d\n", (uint8_t*)(selector_ptr + 1));
+  printf("SIZE OF SELECTOR: %d\n", sizeof(selector_ptr + 1));
+  //the number added to the array pointer after indicates the index number of the array
+  ndn_interest_set_Parameters(&interest, (uint8_t*)(selector_ptr + 1), sizeof(selector[1]));
+  uint8_t test;
+  for(int i = 0; i < 10; i++) {
+    test = interest.parameters.value[i];
+    printf("OUTPUT PARAMETER[%d]: %d\n", i, test);
+  }
+
   ndn_forwarder_express_interest_struct(&interest, on_data, on_timeout, NULL);
 
   running = true;

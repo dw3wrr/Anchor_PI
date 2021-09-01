@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
+#include <ctype.h>
 #include <time.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -58,11 +59,13 @@ int time_slice = 3;
 
 //Selector integers
 //selector will be set from hash function of previous block
-int selector[10] = {0,1,2,3,4,5,6,7,8,9}; //change from 0 to 9
+uint8_t selector[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}; //change from 0 to 9
+uint8_t *selector_ptr = selector;
 bool stored_selectors[10];
 
 bool delay_start[10];
-int delay = 60000;
+//clock time is in nano seconds, divide by 10^6 for actual time
+int delay = 3000000;
 int max_interfaces = 8;
 //set array for multiple anchors for anchor/selector 1 - 10
 int interface_num[10];
@@ -92,12 +95,13 @@ uint8_t secp256r1_pub_key_str[64] = {
 
 //may have to use interest as a pointer
 void flood(ndn_interest_t interest) {
+    printf("\nFlooding\n");
     //multithread: while in time delay period keep accepting other announcements
     //ndn_udp_face_t face;
     ndn_name_t *prefix_name = &interest.name;
     //printf("%s\n", prefix_name);
     char *prefix = &interest.name.components[0].value[0];
-    printf("%s\n", prefix);
+    printf("Prefix: %s\n", prefix);
     
     //gets the forwarder intiailized in the main message
     //router_const = ndn_forwarder_get();
@@ -108,7 +112,8 @@ void flood(ndn_interest_t interest) {
         //Anchor flooding announcement (layer 1)
         //Flood without accounting for time delay or max number of interfaces
         //Get all closest interfaces and forward to them
-        printf("Forwarding Announcement (Layer 1)...");
+        printf("Forwarding Announcement (Anchor)\n");
+        //insert fib information here
         ndn_forwarder_express_interest_struct(&interest, NULL, NULL, NULL);
 
         // for(int i = 0; i < ndn_forwarder_get().fib.capacity; i ++) {
@@ -116,41 +121,51 @@ void flood(ndn_interest_t interest) {
         //     ndn_forwarder_express_interest_struct(&interest, on_data, NULL, NULL);
         // }
     }
+
     else {
         //Normal node flooding announcement (layer 1)
         //Flood while using time delay and accounting for interfaces
         //check pit for incoming interest, then send out interest for each not in pit
         //layer1_fib = router->fib;
-        printf("%s\n", &router->pit->capacity);
-        for(int i = 0; i < router->pit->capacity; i++) {
-            //printf("looking at interfaces in pit");
-            ndn_table_id_t temp_pit_id = router->pit->slots[i].nametree_id;
-            nametree_entry_t *temp_nametree_entry = ndn_nametree_at(router->nametree, temp_pit_id);
-            ndn_table_id_t temp_fib_id = temp_nametree_entry->fib_id;
-            //TODO: Segmentation Fault Here
-            ndn_fib_unregister_face(router->fib, temp_fib_id);
-        }
+        printf("Forwarding Announceent (Non-Anchor)\n");
+        //printf("PIT Entires: %d\n", sizeof(router->pit->slots));
+        // for(int i = 0; i < router->pit->capacity; i++) {
+        //     printf("Iterate number: %d\n", i);
+        //     ndn_table_id_t temp_pit_id = router->pit->slots[i].nametree_id;
+        //     nametree_entry_t *temp_nametree_entry = ndn_nametree_at(router->nametree, temp_pit_id);
+        //     printf("Here\n");
+        //     ndn_table_id_t temp_fib_id = temp_nametree_entry->fib_id;
+        //     //TODO: Segmentation Fault Here
+        //     ndn_fib_unregister_face(router->fib, temp_fib_id);
+        // }
         //router->fib = layer1_fib;
+
         ndn_forwarder_express_interest_struct(&interest, NULL, NULL, NULL);
 
         // for(int i = 0; i < layer1_fib.capacity; i++) {
         //     ndn_forwarder_express_interest_struct(&interest, on_data, NULL, NULL);
         // }
     }
+
+    printf("Flooded Interest!\n");
 }
 
 
 //Send announcement function
 void send_ancmt() {
-    printf("Sending Announcement...\n");
+    printf("\nSending Announcement...\n");
 
     //include periodic subscribe of send_anct
+    //ndn_interest_t *ancmt = new ndn_interest_t();
+    //malloc
     ndn_interest_t ancmt;
     ndn_encoder_t encoder;
     ndn_udp_face_t *face;
     ndn_name_t prefix_name;
-    char* prefix_string = "/ancmt/1";
+    char *prefix_string = "/ancmt/1";
     char interest_buf[4096];
+
+    //. instead ->, initialize as a pointer object first, testing new keyword
 
     //Sets timestamp
     //time_t clk = time(NULL);
@@ -159,18 +174,19 @@ void send_ancmt() {
     //This creates the routes for the interest and sends to nodes
     //ndn_forwarder_add_route_by_name(&face->intf, &prefix_name);
     ndn_name_from_string(&prefix_name, prefix_string, strlen(prefix_string));
-    //TODO: Segmentation Fault Here
+    //FIXED TODO: Segmentation Fault Here
     ndn_interest_from_name(&ancmt, &prefix_name);
     //ndn_forwarder_express_interest_struct(&interest, on_data, on_timeout, NULL);
 
-    //gets ndn timestamp
+    //gets ndn (timestamp)
     ndn_time_ms_t timestamp = ndn_time_now_ms();
 
     //parameter may be one whole string so the parameters may have to be sorted and stored in a way that is readabel by other normal nodes
     //Init ancmt with selector, signature, and timestamp
     //may have to use ex: (uint8_t*)str for middle param
-    ndn_interest_set_Parameters(&ancmt, (uint8_t*)timestamp, sizeof(timestamp));
-    ndn_interest_set_Parameters(&ancmt, (uint8_t*)selector[0], sizeof(selector[0]));
+    
+    ndn_interest_set_Parameters(&ancmt, (uint8_t*)&timestamp, sizeof(timestamp));
+    ndn_interest_set_Parameters(&ancmt, (uint8_t*)(selector_ptr + 1), sizeof(selector[1]));
     //ndn_interest_set_Parameters(&ancmt, (uint8_t*)ip_address, sizeof(ip_address));
 
     //Signed interest init
@@ -178,14 +194,15 @@ void send_ancmt() {
     ndn_ecc_make_key(ecc_secp256r1_pub_key, ecc_secp256r1_prv_key, NDN_ECDSA_CURVE_SECP256R1, 890);
     ndn_ecc_prv_init(ecc_secp256r1_prv_key, secp256r1_prv_key_str, sizeof(secp256r1_prv_key_str), NDN_ECDSA_CURVE_SECP256R1, 0);
     ndn_key_storage_t *storage = ndn_key_storage_get_instance();
-    //segmentation fault here
-    //ndn_signed_interest_ecdsa_sign(&ancmt, storage->self_identity, ecc_secp256r1_prv_key);
+    ndn_name_t *self_identity_ptr = storage->self_identity;
+    //FIXED TODO: segmentation fault here
+    ndn_signed_interest_ecdsa_sign(&ancmt, self_identity_ptr, ecc_secp256r1_prv_key);
     encoder_init(&encoder, interest_buf, 4096);
-    //TODO: Segmentation Fault Here
+    //FIXED TODO: Segmentation Fault Here
     ndn_interest_tlv_encode(&encoder, &ancmt);
 
     //uncomment here to test flood
-    //flood(ancmt);
+    flood(ancmt);
     ancmt_sent = true;
     printf("Announcement sent.\n");
 }
@@ -196,13 +213,13 @@ void send_ancmt() {
 
 void populate_fib() {
     // TODO: make a real populate fib where each node is detected and added into fib
-    printf("FIB populated\n");
+    printf("\nFIB populated\n");
     ndn_udp_face_t *face;
     ndn_name_t prefix_name;
     char *ancmt_string = "/ancmt/1";
     
     //myip, my outgoing port, their incoming ip, their incoming port
-    //pi1->pi2: 192.168.1.10
+    
     in_port_t port1, port2;
     in_addr_t server_ip;
     char *sz_port1, *sz_port2, *sz_addr;
@@ -210,6 +227,7 @@ void populate_fib() {
     struct hostent * host_addr;
     struct in_addr ** paddrs;
 
+    //pi1->pi2: 192.168.1.10
     sz_port1 = "3000";
     sz_addr = "rpi2-btran";
     sz_port2 = "5000";
@@ -241,11 +259,12 @@ void populate_fib() {
 }
 
 bool verify_packet(ndn_interest_t *interest) {
-    printf("Verifying Packet\n");
+    printf("\nVerifying Packet\n");
     //check signature is correct from the public key is valid for all normal nodes
     //check if timestamp is before the current time
     int timestamp = interest->parameters.value[0];
     int current_time = ndn_time_now_ms();
+    //verify time slot
 
     if((current_time - timestamp) < 0) {
         return false;
@@ -267,13 +286,17 @@ void insert_pit(ndn_interest_t interest) {
 }
 
 void *start_delay(void *arguments) {
-    printf("Delay started\n");
+    printf("\nDelay started\n");
     struct delay_struct *args = arguments;
     //starts delay and adds onto max interfaces
     clock_t start_time = clock();
-    while (clock() < start_time + delay) {}
+    printf("Delay Time: %d seconds\n", delay/1000000);
+    while (clock() < start_time + delay) {
+    }
+    printf("Delay Complete\n");
     //then when finished, flood
     if(did_flood[args->struct_selector] == true) {
+        printf("Already flooded\n");
     }
     else {
         flood(args->interest);
@@ -283,22 +306,59 @@ void *start_delay(void *arguments) {
     }
 }
 
+char *trimwhitespace(char *str) {
+    char *end;
+
+    while(isspace((unsigned char)*str)) str++;
+
+    if(*str == 0)
+    return str;
+
+    end = str + strlen(str) - 1;
+    while(end > str && isspace((unsigned char)*end)) end--;
+
+    end[1] = '\0';
+
+    return str;
+}
+
 int on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata) {
-    printf("Normal-Node On Interest\n");
+    printf("\nNormal-Node On Interest\n");
     pthread_t layer1;
     ndn_interest_t interest_pkt;
     ndn_interest_from_block(&interest_pkt, interest, interest_size);
 
     char *prefix = &interest_pkt.name.components[0].value[0];
-    printf("%s\n", prefix);
+    prefix = trimwhitespace(prefix);
+    // char prefix_convert[10];
+    // int j = sprintf(prefix_convert, "%s", prefix);
+    // char *prefix_check = "ancmt";
+    printf("PREFIX: %s\n", prefix);
+    // printf("PREFIX_CONVERT: `%s`\n", prefix_convert);
+    // printf("PREFIX_CHECK: `%s`\n", prefix_check);
+    // printf("PREFIX(int): %d\n", prefix);
+    // printf("PREFIX CONVERT(int): %d\n", prefix_convert);
+    // printf("PREFIX_CHECK(int): %d\n", prefix_check);
+    
+
+    
+    // for (int i = 0; i < interest_pkt.name.components_size; i++) {
+    //     printf("/");
+    //     for (int j = 0; j < interest_pkt.name.components[i].size; j++) {
+    //         printf("%c", interest_pkt.name.components[i].value[j]);
+    //     }
+    // }
+    // printf("\n");
 
     int timestamp = interest_pkt.parameters.value[0];
-    printf("%s\n", &timestamp);
+    printf("TIMESTAMP: %d\n", timestamp);
     int current_time = ndn_time_now_ms();
+    printf("LAST INTEREST: %d\n", last_interest);
     
     //selector number
-    int parameters = interest_pkt.parameters.value[1];
-    printf("%s\n", &parameters);
+    int parameters = interest_pkt.parameters.value[0];
+    printf("SELECTOR: %d\n", parameters);
+    printf("STORED SELECTOR: %d\n", stored_selectors[parameters]);
 
     struct delay_struct args;
     args.interest = interest_pkt;
@@ -311,13 +371,27 @@ int on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
     //     printf("Packet Wrong Format!");
     //     return NDN_UNSUPPORTED_FORMAT;
     // }
-    printf("Packet Verified!");
+    //printf("Packet Verified!\n");
     insert_pit(interest_pkt);
+
+    // if(strcmp(prefix, "ancmt") == 0) {
+    //     printf("Prefix good\n");
+    // }
+    // if(strcmp(prefix, prefix_check) == 0) {
+    //     printf("Prefix good(var)\n");
+    // }
+    // if(stored_selectors[parameters] == false) {
+    //     printf("Selector false\n");
+    // }
+    // if(stored_selectors[parameters] == true) {
+    //     printf("Selector true\n");
+    // }
 
     //check ancmt, stored selectors, and timestamp(maybe)
     //timestamp + selector for new and old
     //TODO: fix time to coorespond to last ancmt timestamp
-    if((prefix == "ancmt") && stored_selectors[parameters] == false && (timestamp - last_interest) > 0) {
+    //if((prefix == "ancmt") && stored_selectors[parameters] == false && (timestamp - last_interest) > 0) {
+    if(strcmp(prefix, "ancmt") == 0 && stored_selectors[parameters] == false) {
         printf("New Ancmt\n");
         stored_selectors[parameters] = true;
         if(delay_start[parameters] != true) {
@@ -332,7 +406,7 @@ int on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
         // }    
     }
 
-    else if((prefix == "ancmt") && stored_selectors[parameters] == true) {
+    else if(strcmp(prefix, "ancmt") == 0 && stored_selectors[parameters] == true) {
         printf("Old Ancmt\n");
         interface_num[parameters]++;
         if(interface_num[parameters] >= max_interfaces) {
@@ -346,7 +420,9 @@ int on_interest(const uint8_t* interest, uint32_t interest_size, void* userdata)
             }
         }
     }
-    last_interest = timestamp;
+
+    last_interest = current_time;
+    printf("END OF ON_INTEREST\n");
     
     return NDN_FWD_STRATEGY_SUPPRESS;
 }
@@ -410,36 +486,40 @@ void debug_ndn() {
 
 int main(int argc, char *argv[]) {
     printf("Main Loop\n");
+    ndn_lite_startup();
     //ndn_interest_t interest;
-    ndn_udp_face_t *face;
     //pthread_t layer1;
-    ndn_name_t prefix_name;
     char *ancmt_string = "/ancmt/1";
 
-    in_port_t port1, port2;
-    in_addr_t server_ip;
-    char *sz_port1, *sz_port2, *sz_addr;
-    uint32_t ul_port;
-    struct hostent * host_addr;
-    struct in_addr ** paddrs;
+    // in_port_t port1, port2;
+    // in_addr_t server_ip;
+    ndn_name_t name_prefix;
+    // ndn_udp_face_t *face;
+    // char *sz_port1, *sz_port2, *sz_addr;
+    // uint32_t ul_port;
+    // struct hostent * host_addr;
+    // struct in_addr ** paddrs;
 
-    sz_port1 = "5000";
-    sz_addr = "rpi3-btran";
-    sz_port2 = "3000";
-    host_addr = gethostbyname(sz_addr);
-    paddrs = (struct in_addr **)host_addr->h_addr_list;
-    server_ip = paddrs[0]->s_addr;
-    ul_port = strtoul(sz_port1, NULL, 10);
-    port1 = htons((uint16_t) ul_port);
-    ul_port = strtoul(sz_port2, NULL, 10);
-    port2 = htons((uint16_t) ul_port);
-    ndn_name_from_string(&prefix_name, ancmt_string, strlen(ancmt_string));
+    // sz_port1 = "5000";
+    // sz_addr = "rpi3-btran";
+    // sz_port2 = "3000";
+
+    // host_addr = gethostbyname(sz_addr);
+    // paddrs = (struct in_addr **)host_addr->h_addr_list;
+    // server_ip = paddrs[0]->s_addr;
+    // ul_port = strtoul(sz_port1, NULL, 10);
+    // port1 = htons((uint16_t) ul_port);
+    // ul_port = strtoul(sz_port2, NULL, 10);
+    // port2 = htons((uint16_t) ul_port);
+
+    ndn_name_from_string(&name_prefix, ancmt_string, strlen(ancmt_string));
+    //face = ndn_udp_unicast_face_construct(INADDR_ANY, port1, server_ip, port2);
+    ndn_forwarder_register_name_prefix(&name_prefix, on_interest, NULL);
+    last_interest = ndn_time_now_ms();
     
-    ndn_lite_startup();
-    face = ndn_udp_unicast_face_construct(INADDR_ANY, port1, server_ip, port2);
-    ndn_forwarder_register_name_prefix(&prefix_name, on_interest, NULL);
+    //FACE NEEDS TO BE INITIATED WITH CORRECT PARAMETERS BEFORE SENDING OR RECEIVING ANCMT
+    //populate_fib();
     //registers ancmt prefix with the forwarder so when ndn_forwarder_process is called, it will call the function on_interest
-    populate_fib();
 
     //signature init
 
@@ -448,10 +528,10 @@ int main(int argc, char *argv[]) {
     while (running) {
         //printf("nope");
         //uncomment here to test send anct
-        // if(is_anchor && !ancmt_sent) {
-        //     //printf("send anct called\n");
-        //     send_ancmt();
-        // }
+        if(is_anchor && !ancmt_sent) {
+            //printf("send anct called\n");
+            send_ancmt();
+        }
         //packet is ancmt
         
         // if(ndn_forwarder_receive(ndn_face_intf_t* face, uint8_t* packet, size_t length) == NDN_SUCCESS) {
@@ -469,7 +549,7 @@ int main(int argc, char *argv[]) {
         ndn_forwarder_process();
         usleep(10000);
     }
-    ndn_face_destroy(&face->intf);
+    //ndn_face_destroy(&face->intf);
 }
 
 //test main method
