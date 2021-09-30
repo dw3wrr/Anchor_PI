@@ -108,6 +108,8 @@ ndn_pit_unregister_face(ndn_pit_t* self, ndn_table_id_t face_id){
   }
 }
 
+//add interest packet input into pit
+
 static ndn_table_id_t
 ndn_pit_add_new_entry(ndn_pit_t* pit , int nametree_id){
   ndn_table_id_t i;
@@ -136,6 +138,27 @@ ndn_pit_find_or_insert(ndn_pit_t* self, uint8_t* name, size_t length){
   }
   return &self->slots[entry->pit_id];
 }
+
+//updated ndn_pit_find_or_insert
+/*
+ndn_pit_entry_t*
+ndn_pit_find_or_insert(ndn_pit_t* self, ndn_interest_t *interest, uint8_t* name, size_t length){
+  nametree_entry_t* entry = ndn_nametree_find_or_insert(self->nametree, name, length);
+  if(entry == NULL){
+    return NULL;
+  }
+  if(entry->pit_id == NDN_INVALID_ID){
+    entry->pit_id = ndn_pit_add_new_entry(self, ndn_nametree_getid(self->nametree, entry));
+    NDN_LOG_DEBUG("[PIT] Add a new PIT entry\n");
+    if(entry->pit_id == NDN_INVALID_ID){
+      return NULL;
+    }
+  }
+  self->slots[entry->pit_id]->prefix_name = name;
+  self->slots[entry->pit_id]->interest_pkt = interest;
+  return &self->slots[entry->pit_id];
+}
+*/
 
 ndn_pit_entry_t*
 ndn_pit_find(ndn_pit_t* self, uint8_t* prefix, size_t length)
