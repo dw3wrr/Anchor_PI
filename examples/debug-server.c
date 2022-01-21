@@ -5,15 +5,28 @@
 #include <unistd.h>
 //#include <graphics.h>
 #include <arpa/inet.h> //linux only
-//#include <Winsock2.h> //windows only
 #include <sys/types.h> 
 #include <sys/socket.h> 
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <sys/time.h>
+#include <time.h>
+#include <math.h>
+#include <fenv.h>
      
 #define TRUE   1 
 #define FALSE  0 
 #define PORT 8888
+
+#define NODE1 "155.246.44.142"
+#define NODE2 "155.246.215.101"
+#define NODE3 "155.246.202.145"
+#define NODE4 "155.246.216.113"
+#define NODE5 "155.246.203.173"
+#define NODE6 "155.246.216.39"
+#define NODE7 "155.246.202.111"
+#define NODE8 "155.246.212.111"
+#define NODE9 "155.246.213.83"
+#define NODE10 "155.246.210.98"
 
 struct Node{
     char *data;
@@ -101,23 +114,34 @@ void testTree() {
 
 int main(int argc , char *argv[])  
 {
-    testTree();
-    /*
-    struct Node root;
+    FILE *fp;
+    fp = fopen("debug-output.txt", "w+");
+    fclose(fp);
+    //testTree();
+    //init tree with root
+    struct Node *root = (struct Node *)malloc(sizeof(struct Node));
     root = addNode("root");
+
     int opt = TRUE;  
     int master_socket , addrlen , new_socket , client_socket[30] , max_clients = 30 , activity, i , valread , sd;  
     int max_sd;  
     struct sockaddr_in address;  
          
-    char buffer[1025];  //data buffer of 1K 
+    char buffer[1025];  //data buffer of 1K
+    //separate buffer words
          
     //set of socket descriptors
     fd_set readfds;  
          
     //a message 
-    char *message = "Now Connected To Debug Server";  
-     
+    char *message = "Now Connected To Debug Server";
+
+    //time variables
+    char time_buffer[26];
+    int millisec;
+    struct tm* tm_info;
+    struct timeval tv;
+
     //initialise all client_socket[] to 0 so not checked 
     for (i = 0; i < max_clients; i++)  
     {  
@@ -154,7 +178,7 @@ int main(int argc , char *argv[])
     printf("Listener on port %d \n", PORT);  
          
     //try to specify maximum of 3 pending connections for the master socket 
-    if (listen(master_socket, 3) < 0)  
+    if (listen(master_socket, 31) < 0)  
     {  
         perror("listen");  
         exit(EXIT_FAILURE);  
@@ -165,7 +189,7 @@ int main(int argc , char *argv[])
     puts("Waiting for connections ...");  
          
     while(TRUE)  
-    {  
+    {
         //clear the socket set 
         FD_ZERO(&readfds);  
      
@@ -208,17 +232,50 @@ int main(int argc , char *argv[])
                 exit(EXIT_FAILURE);  
             }  
              
-            //inform user of socket number - used in send and receive commands 
-            printf("New connection , socket fd is %d , ip is : %s , port : %d \n" , new_socket , inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
-              
+            //inform user of socket number - used in send and receive commands
+            char *node_num = "Node";
+            if(strcmp( inet_ntoa(address.sin_addr), NODE1) == 0) {
+                node_num = "Node 1";
+            }
+            else if(strcmp( inet_ntoa(address.sin_addr), NODE2) == 0) {
+                node_num = "Node 2";
+            }
+            else if(strcmp( inet_ntoa(address.sin_addr), NODE3) == 0) {
+                node_num = "Node 3";
+            }
+            else if(strcmp( inet_ntoa(address.sin_addr), NODE4) == 0) {
+                node_num = "Node 4";
+            }
+            else if(strcmp( inet_ntoa(address.sin_addr), NODE5) == 0) {
+                node_num = "Node 5";
+            }
+            else if(strcmp( inet_ntoa(address.sin_addr), NODE6) == 0) {
+                node_num = "Node 6";
+            }
+            else if(strcmp( inet_ntoa(address.sin_addr), NODE7) == 0) {
+                node_num = "Node 7";
+            }
+            else if(strcmp( inet_ntoa(address.sin_addr), NODE8) == 0) {
+                node_num = "Node 8";
+            }
+            else if(strcmp( inet_ntoa(address.sin_addr), NODE9) == 0) {
+                node_num = "Node 9";
+            }
+            else if(strcmp( inet_ntoa(address.sin_addr), NODE10) == 0) {
+                node_num = "Node 10";
+            }
+            printf("New connection , socket fd is %d , ip is : %s , port : %d (%s)\n" , new_socket , inet_ntoa(address.sin_addr) , ntohs(address.sin_port), node_num);
+
            
             //send new connection greeting message 
+            /*
             if( send(new_socket, message, strlen(message), 0) != strlen(message) )  
             {  
                 perror("send");  
             }  
                  
             puts("Welcome message sent successfully");  
+            */
                  
             //add new socket to array of sockets 
             for (i = 0; i < max_clients; i++)  
@@ -259,14 +316,64 @@ int main(int argc , char *argv[])
                 //Echo back the message that came in 
                 else 
                 {  
+                    fp = fopen("debug-output.txt", "a+");
                     //set the string terminating NULL byte on the end 
                     //of the data read
+
+                    gettimeofday(&tv, NULL);
+
+                    millisec = tv.tv_usec/1000.0; // Round to nearest millisec
+                    if (millisec>=1000) { // Allow for rounding up to nearest second
+                        millisec -=1000;
+                        tv.tv_sec++;
+                    }
+
+                    tm_info = localtime(&tv.tv_sec);
+
+                    strftime(time_buffer, 26, "%Y:%m:%d %H:%M:%S", tm_info);
+                    printf("%s.%03d ", time_buffer, millisec);
 
                     //here add recording information about incoming message that is not a new connection
                     //so what type: ancmt send/ancmt receive/
                     getpeername(sd , (struct sockaddr*)&address , \
                         (socklen_t*)&addrlen);
                     char *temp = inet_ntoa(address.sin_addr);
+                    char *node_num = "Node";
+                    if(strcmp(temp, NODE1) == 0) {
+                        node_num = "Node 1";
+                    }
+                    else if(strcmp(temp, NODE2) == 0) {
+                        node_num = "Node 2";
+                    }
+                    else if(strcmp(temp, NODE3) == 0) {
+                        node_num = "Node 3";
+                    }
+                    else if(strcmp(temp, NODE4) == 0) {
+                        node_num = "Node 4";
+                    }
+                    else if(strcmp(temp, NODE5) == 0) {
+                        node_num = "Node 5";
+                    }
+                    else if(strcmp(temp, NODE6) == 0) {
+                        node_num = "Node 6";
+                    }
+                    else if(strcmp(temp, NODE7) == 0) {
+                        node_num = "Node 7";
+                    }
+                    else if(strcmp(temp, NODE8) == 0) {
+                        node_num = "Node 8";
+                    }
+                    else if(strcmp(temp, NODE9) == 0) {
+                        node_num = "Node 9";
+                    }
+                    else if(strcmp(temp, NODE10) == 0) {
+                        node_num = "Node 10";
+                    }
+                    printf("%s: -> ", node_num);
+                    //printf("IP ADDRESS: %s -> ", temp);
+                    fprintf(fp, "IP ADDRESS: %s -> ", temp);
+
+                    /*
                     struct Node *tempNode;
                     tempNode.data = temp;
                     if(buffer[valread] == "Is Anchor") {
@@ -285,14 +392,20 @@ int main(int argc , char *argv[])
                             root.firstChild->firstChild = tempNode;
                         }
                     }
-                    buffer[valread] = '\0';  
-                    send(sd , buffer , strlen(buffer) , 0 );  
+                    */
+                    buffer[valread] = '\0';
+                    char* debug_message = buffer;
+                    //printf("VALREAD: %d\n", valread);
+                    printf("MESSAGE: %s\n", debug_message);
+                    fprintf(fp, "MESSAGE: %s\n", debug_message);
+                    //send(sd , buffer , strlen(buffer) , 0 );
+                    fclose(fp);
                 }  
             }  
         }  
     }
     free(root);
-    */
+    fclose(fp);
          
-    return 0;  
+    return 0;
 }

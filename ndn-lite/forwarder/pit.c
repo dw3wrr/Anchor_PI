@@ -10,6 +10,8 @@
 #define ENABLE_NDN_LOG_INFO 0
 #define ENABLE_NDN_LOG_DEBUG 0
 #define ENABLE_NDN_LOG_ERROR 1
+#include "../encode/interest.h"
+#include "../encode/name.h"
 #include "pit.h"
 #include "../util/msg-queue.h"
 #include "../util/logger.h"
@@ -142,7 +144,7 @@ ndn_pit_find_or_insert(ndn_pit_t* self, uint8_t* name, size_t length){
 //updated ndn_pit_find_or_insert
 /*
 ndn_pit_entry_t*
-ndn_pit_find_or_insert(ndn_pit_t* self, ndn_interest_t *interest, uint8_t* name, size_t length){
+ndn_pit_find_or_insert(ndn_pit_t* self, ndn_interest_t interest, uint8_t* name, size_t length){
   nametree_entry_t* entry = ndn_nametree_find_or_insert(self->nametree, name, length);
   if(entry == NULL){
     return NULL;
@@ -150,12 +152,12 @@ ndn_pit_find_or_insert(ndn_pit_t* self, ndn_interest_t *interest, uint8_t* name,
   if(entry->pit_id == NDN_INVALID_ID){
     entry->pit_id = ndn_pit_add_new_entry(self, ndn_nametree_getid(self->nametree, entry));
     NDN_LOG_DEBUG("[PIT] Add a new PIT entry\n");
+    self.slots[entry->pit_id].prefix_name = interest.name;
+    self.slots[entry->pit_id].interest_pkt = interest;
     if(entry->pit_id == NDN_INVALID_ID){
       return NULL;
     }
   }
-  self->slots[entry->pit_id]->prefix_name = name;
-  self->slots[entry->pit_id]->interest_pkt = interest;
   return &self->slots[entry->pit_id];
 }
 */

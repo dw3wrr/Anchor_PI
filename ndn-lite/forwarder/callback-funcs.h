@@ -13,6 +13,9 @@
 
 #include <stdint.h>
 
+//added includes btran
+//#include "../../adaptation/udp/udp-face.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -24,9 +27,7 @@ extern "C" {
  * @param[in] userdata [Optional] User defined data.
  * @return The forward strategy to take, only used if no Data get from this function.
  */
-typedef int (*ndn_on_interest_func)(const uint8_t* interest,
-                                    uint32_t interest_size,
-                                    void* userdata);
+typedef int (*ndn_on_interest_func)(const uint8_t* interest, uint32_t interest_size, void* userdata);
 
 /** The onData callback function.
  *

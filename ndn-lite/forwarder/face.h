@@ -125,6 +125,7 @@ ndn_face_up(ndn_face_intf_t* self)
  * @param[in] size The size of @c packet.
  * @return #NDN_SUCCESS if the call succeeded. The error code otherwise.
  */
+
 static inline int
 ndn_face_send(ndn_face_intf_t* self, const uint8_t* packet, uint32_t size)
 {

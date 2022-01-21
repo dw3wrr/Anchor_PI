@@ -17,9 +17,19 @@
 #include "../encode/name.h"
 #include "../util/logger.h"
 
+//added includes
+#include "../encode/data.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+
 uint8_t encoding_buf[2048];
 
 static ndn_forwarder_t forwarder;
+
+static callback_holder_t *holder;
 
 // face_id is optional
 static int
@@ -74,6 +84,18 @@ ndn_forwarder_init(void)
   ndn_pit_init(ptr, NDN_PIT_MAX_SIZE, forwarder.nametree);
   forwarder.pit = (ndn_pit_t*)ptr;
   ptr += NDN_PIT_RESERVE_SIZE(NDN_PIT_MAX_SIZE);
+}
+
+//call once only
+void callback_insert(ndn_on_interest_func on_interest_input, ndn_on_data_func on_data_input, ndn_fill_pit_func fill_pit_input) {
+  callback_holder_t *ptr = malloc(sizeof(callback_holder_t));
+  ptr->on_interest_func = malloc(sizeof(ndn_on_interest_func));
+  ptr->on_data_func = malloc(sizeof(ndn_on_data_func));
+  ptr->fill_pit_func = malloc(sizeof(ndn_fill_pit_func));
+  holder = ptr;
+  holder->on_interest_func = on_interest_input;
+  holder->on_data_func = on_data_input;
+  holder->fill_pit_func = fill_pit_input;
 }
 
 // const ndn_forwarder_t*
@@ -304,6 +326,53 @@ ndn_forwarder_put_data(uint8_t* data, size_t length)
   return fwd_data_pipeline(data, length, name, name_len, NDN_INVALID_ID);
 }
 
+//this function will always call on data if data is received from interface no matter the prefix
+//only need to define udp face
+int
+ndn_forwarder_receive(ndn_face_intf_t* face, uint8_t* packet, size_t length)
+{
+  uint32_t type, val_len;
+  uint8_t* buf;
+  uint8_t *name;
+  size_t name_len;
+  interest_options_t options;
+  ndn_face_intf_t *input_face;
+  input_face = face;
+  int ret;
+  ndn_table_id_t face_id = (face ? face->face_id : NDN_INVALID_ID);
+
+  if (packet == NULL)
+    return NDN_INVALID_POINTER;
+
+  buf = tlv_get_type_length(packet, length, &type, &val_len);
+  if (val_len != length - (buf - packet))
+    return NDN_WRONG_TLV_LENGTH;
+
+  if (type == TLV_Interest) {
+    ret = tlv_interest_get_header(packet, length, &options, &name, &name_len);
+    holder->fill_pit_func(packet, length, input_face);
+    holder->on_interest_func(packet, length, NULL);
+    if (ret != NDN_SUCCESS)
+      return ret;
+    return NDN_SUCCESS;
+  }
+  else if(type == TLV_Data) {
+    ret = tlv_data_get_name(packet, length, &name, &name_len);
+    //make sure to include normal node.h in here
+    //when inside this statement call this inside normal node
+    holder->on_data_func(packet, length, NULL);
+    if (ret != NDN_SUCCESS)
+      return ret;
+    return NDN_SUCCESS;
+  }
+  else {
+    return NDN_WRONG_TLV_TYPE;
+  }
+}
+
+//changing this function
+//orginal below
+/*
 int
 ndn_forwarder_receive(ndn_face_intf_t* face, uint8_t* packet, size_t length)
 {
@@ -338,6 +407,7 @@ ndn_forwarder_receive(ndn_face_intf_t* face, uint8_t* packet, size_t length)
     return NDN_WRONG_TLV_TYPE;
   }
 }
+*/
 
 static int
 fwd_on_incoming_interest(uint8_t* interest,

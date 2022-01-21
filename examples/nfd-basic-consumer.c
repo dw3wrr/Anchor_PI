@@ -37,6 +37,7 @@ parseArgs(int argc, char *argv[])
   return 0;
 }
 
+/*
 void
 on_data(const uint8_t* rawdata, uint32_t data_size, void* userdata)
 {
@@ -50,6 +51,7 @@ on_data(const uint8_t* rawdata, uint32_t data_size, void* userdata)
   printf("It says: %s\n", data.content_value);
   running = false;
 }
+*/
 
 void
 on_timeout(void* userdata)
@@ -78,7 +80,9 @@ main(int argc, char *argv[])
   ndn_interest_set_MustBeFresh(&interest, true);
   ndn_interest_set_CanBePrefix(&interest, true);
   interest.nonce = random();
+  /*
   ndn_forwarder_express_interest_struct(&interest, on_data, on_timeout, NULL);
+  */
 
   running = true;
   while(running) {
