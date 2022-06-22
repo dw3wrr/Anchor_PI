@@ -73,7 +73,7 @@ typedef int (*ndn_on_interest_func)(const uint8_t* interest,
                                     uint32_t interest_size,
                                     void* userdata);
 
-typedef void (*ndn_fill_pit_func)(const uint8_t* interest, uint32_t interest_size, ndn_face_intf_t *face);
+typedef void (*ndn_fill_pit_func)(const uint8_t* interest, uint32_t interest_size);
 
 //user added data structure to hold an on-data callback function
 typedef struct callback_holder {

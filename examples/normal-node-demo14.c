@@ -1783,11 +1783,10 @@ int main(int argc, char *argv[]) {
 
     //This is for adding 2 way neighbors in network
     //DEMO: CHANGE
-    node_num = 10;
-    add_neighbor(4);
-    add_neighbor(9);
+    node_num = 14;
+    add_neighbor(5);
+    add_neighbor(10);
     add_neighbor(12);
-    add_neighbor(14);
 
     last_interest = ndn_time_now_ms();
     

@@ -283,7 +283,6 @@ ndn_forwarder_express_interest(uint8_t* interest, size_t length,
   ret = tlv_interest_get_header(interest, length, &options, &name, &name_len);
   if(ret != NDN_SUCCESS)
     return ret;
-
   pit_entry = ndn_pit_find_or_insert(forwarder.pit, name, name_len);
   if (pit_entry == NULL)
     return NDN_FWD_PIT_FULL;
@@ -350,7 +349,7 @@ ndn_forwarder_receive(ndn_face_intf_t* face, uint8_t* packet, size_t length)
 
   if (type == TLV_Interest) {
     ret = tlv_interest_get_header(packet, length, &options, &name, &name_len);
-    holder->fill_pit_func(packet, length, input_face);
+    holder->fill_pit_func(packet, length);
     holder->on_interest_func(packet, length, NULL);
     if (ret != NDN_SUCCESS)
       return ret;
@@ -360,6 +359,7 @@ ndn_forwarder_receive(ndn_face_intf_t* face, uint8_t* packet, size_t length)
     ret = tlv_data_get_name(packet, length, &name, &name_len);
     //make sure to include normal node.h in here
     //when inside this statement call this inside normal node
+    printf("NDN forwarder recieve data: '%s'\n", name);
     holder->on_data_func(packet, length, NULL);
     if (ret != NDN_SUCCESS)
       return ret;
@@ -482,7 +482,6 @@ fwd_multicast(uint8_t* packet,
   ndn_table_id_t id;
   ndn_face_intf_t* face;
   ndn_bitset_t ret = 0;
-
   while(out_faces != 0){
     id = bitset_pop_least(&out_faces);
     face = forwarder.facetab->slots[id];
@@ -506,24 +505,20 @@ fwd_on_outgoing_interest(uint8_t* interest,
   int strategy;
   uint8_t *hop_limit;
   ndn_bitset_t outfaces;
-
   fib_entry = ndn_fib_prefix_match(forwarder.fib, name, name_len);
   if(fib_entry == NULL){
     NDN_LOG_ERROR("[FORWARDER] Drop by no route\n");
     return NDN_FWD_NO_ROUTE;
   }
-
   if(fib_entry->on_interest){
     strategy = fib_entry->on_interest(interest, length, fib_entry->userdata);
   }else{
     strategy = NDN_FWD_STRATEGY_MULTICAST;
   }
-
   // The interest may be satisfied immediately so check again
   if(entry->nametree_id == NDN_INVALID_ID){
     return NDN_SUCCESS;
   }
-
   hop_limit = tlv_interest_get_hoplimit_ptr(interest, length);
   if(hop_limit != NULL){
     if(*hop_limit <= 0){
@@ -534,11 +529,9 @@ fwd_on_outgoing_interest(uint8_t* interest,
       *hop_limit -= 1;
     }
   }
-
   outfaces = (fib_entry->nexthop & (~entry->outgoing_faces));
   if(strategy == NDN_FWD_STRATEGY_MULTICAST){
     entry->outgoing_faces |= fwd_multicast(interest, length, outfaces, face_id);
   }
-
   return NDN_SUCCESS;
 }

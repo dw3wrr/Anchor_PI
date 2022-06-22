@@ -41,14 +41,15 @@
 typedef uint16_t ndn_table_id_t;
 
 #define NDN_INVALID_ID 0xFFFF
-#define NDN_NAMETREE_MAX_SIZE 64
-#define NDN_FIB_MAX_SIZE 20
-#define NDN_PIT_MAX_SIZE 32
+#define NDN_NAMETREE_MAX_SIZE 256
+#define NDN_FIB_MAX_SIZE 256
+#define NDN_PIT_MAX_SIZE 256
 #define NDN_CS_MAX_SIZE 10
-#define NDN_FACE_TABLE_MAX_SIZE 30
+//number of faces allowed in face table
+#define NDN_FACE_TABLE_MAX_SIZE 4096
 #define NDN_FACE_DEFAULT_COST 1
 #define NDN_AES_BLOCK_SIZE 16
-#define NDN_MAX_FACE_PER_PIT_ENTRY 3
+#define NDN_MAX_FACE_PER_PIT_ENTRY 64
 
 // fragmentation support
 #define NDN_FRAG_HDR_LEN 3 // Size of the NDN L2 fragmentation header

@@ -24,6 +24,7 @@ ndn_table_id_t ndn_facetab_register(ndn_face_table_t* self, ndn_face_intf_t* fac
   for(i = 0; i < self->capacity; i ++){
     if(self->slots[i] == NULL){
       self->slots[i] = face;
+      printf("face_table_register number: %d\n", i);
       return i;
     }
   }

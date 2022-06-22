@@ -281,18 +281,18 @@ class EchoServerProtocol(asyncio.Protocol):
 
         calc_average()
 
-        # colors = list(nx.get_edge_attributes(G,'color').values())
-        # weights = list(nx.get_edge_attributes(G,'weight').values())
-        # colors_data = list(nx.get_edge_attributes(H,'color').values())
-        # weights_data = list(nx.get_edge_attributes(H,'weight').values())
-        # plt.clf()
-        # plt.title(graph_title)
-        # plt.figure(1)
-        # nx.draw(G, pos, with_labels=True,node_size=node_sizes,edgecolors='black', edge_color = colors, width = weights,node_color=node_colors,connectionstyle='arc3, rad = 0.1')
-        # plt.figure(2)
-        # nx.draw(H, pos, with_labels=True,node_size=node_sizes,edgecolors='black', edge_color = colors_data, width = weights_data,node_color=node_colors,connectionstyle='arc3, rad = 0.1')
-        # plt.show(block=False)
-        # plt.pause(0.000001)
+        colors = list(nx.get_edge_attributes(G,'color').values())
+        weights = list(nx.get_edge_attributes(G,'weight').values())
+        colors_data = list(nx.get_edge_attributes(H,'color').values())
+        weights_data = list(nx.get_edge_attributes(H,'weight').values())
+        plt.clf()
+        plt.title(graph_title)
+        plt.figure(1)
+        nx.draw(G, pos, with_labels=True,node_size=node_sizes,edgecolors='black', edge_color = colors, width = weights,node_color=node_colors,connectionstyle='arc3, rad = 0.1')
+        plt.figure(2)
+        nx.draw(H, pos, with_labels=True,node_size=node_sizes,edgecolors='black', edge_color = colors_data, width = weights_data,node_color=node_colors,connectionstyle='arc3, rad = 0.1')
+        plt.show(block=False)
+        plt.pause(0.000001)
 
 async def main():
     # Get a reference to the event loop as we plan to use low-level APIs
@@ -300,7 +300,7 @@ async def main():
 
     server = await loop.create_server(
         lambda: EchoServerProtocol(),
-        '0.0.0.0', 8888)
+        '0.0.0.0', 8887)
 
     async with server:
         await server.serve_forever()

@@ -14,6 +14,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +32,9 @@ extern "C" {
 
 /** The size of message queue in bytes.
  */
-#define NDN_MSGQUEUE_SIZE 4096
+#define NDN_MSGQUEUE_SIZE 8192
+//NOTE: THIS IS IMPORTANT FOR GETTING MULTIPLE MESSAGES AND ENSURE THAT UDP FACES WORK CORRECTLY
+//size of 4096 bytes stopped after 78 data2 packets with 1 anchor 14 nodes with 
 
 #pragma pack(1)
 struct ndn_msg;

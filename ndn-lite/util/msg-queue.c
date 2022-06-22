@@ -66,6 +66,7 @@ ndn_msgqueue_dispatch(void) {
   return true;
 }
 
+//adds into the msgqueue
 struct ndn_msg*
 ndn_msgqueue_post(void *target,
                   ndn_msg_callback reason,
