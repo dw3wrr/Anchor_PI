@@ -17,16 +17,21 @@
 #define FALSE  0 
 #define PORT 8888
 
-#define NODE1 "155.246.44.142"
-#define NODE2 "155.246.215.101"
-#define NODE3 "155.246.202.145"
-#define NODE4 "155.246.216.113"
-#define NODE5 "155.246.203.173"
-#define NODE6 "155.246.216.39"
-#define NODE7 "155.246.202.111"
-#define NODE8 "155.246.212.111"
-#define NODE9 "155.246.213.83"
-#define NODE10 "155.246.210.98"
+#define NODE1 "10.156.117.162"
+#define NODE2 "10.156.99.43"
+#define NODE3 "10.156.99.46"
+#define NODE4 "10.156.99.49"
+#define NODE5 "10.156.112.79"
+#define NODE6 "10.156.117.184"
+#define NODE7 "10.156.99.40"
+#define NODE8 "10.156.99.48"
+#define NODE9 "10.156.117.86"
+#define NODE10 "10.156.99.42"
+#define NODE11 "10.156.114.241"
+#define NODE12 "10.156.117.157"
+#define NODE13 "10.156.117.186"
+#define NODE14 "10.156.99.50"
+#define DEBUG "10.156.99.155"
 
 struct Node{
     char *data;
